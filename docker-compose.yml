@@ -1,0 +1,269 @@
+version: "3.9"
+
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Warsaw
+      - WEBUI_PORT=8080
+      - UMASK_SET=002
+    volumes:
+      - /media/plex/temp:/downloads
+      - /media/plex/apps/qbittorrent:/config
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - media-net
+    healthcheck:
+      test: ["CMD-SHELL","wget -qO- http://localhost:8080 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Warsaw
+      - UMASK_SET=002
+    volumes:
+      - /media/plex/apps/prowlarr:/config
+    ports:
+      - "9696:9696"
+    restart: unless-stopped
+    networks:
+      - media-net
+    healthcheck:
+      test: ["CMD-SHELL","wget -qO- http://localhost:9696 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Warsaw
+      - UMASK_SET=002
+    volumes:
+      - /media/plex/movies:/movies
+      - /media/plex/temp:/downloads
+      - /media/plex/apps/radarr:/config
+    ports:
+      - "7878:7878"
+    restart: unless-stopped
+    networks:
+      - media-net
+    healthcheck:
+      test: ["CMD-SHELL","wget -qO- http://localhost:7878 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Warsaw
+      - UMASK_SET=002
+    volumes:
+      - /media/plex/shows:/tv
+      - /media/plex/temp:/downloads
+      - /media/plex/apps/sonarr:/config
+    ports:
+      - "8989:8989"
+    restart: unless-stopped
+    networks:
+      - media-net
+    healthcheck:
+      test: ["CMD-SHELL","wget -qO- http://localhost:8989 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Warsaw
+      - UMASK_SET=002
+    volumes:
+      - /media/plex/movies:/movies
+      - /media/plex/shows:/tv
+      - /media/plex/apps/bazarr:/config
+    ports:
+      - "6767:6767"
+    restart: unless-stopped
+    networks:
+      - media-net
+    healthcheck:
+      test: ["CMD-SHELL","wget -qO- http://localhost:6767 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  overseerr:
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Warsaw
+      - UMASK_SET=002
+    volumes:
+      - /media/plex/apps/overseerr:/config
+    ports:
+      - "5055:5055"
+    restart: unless-stopped
+    networks:
+      - media-net
+    healthcheck:
+      test: ["CMD-SHELL","wget -qO- http://localhost:5055 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  byparr:
+    image: ghcr.io/thephaseless/byparr:latest
+    container_name: byparr
+    environment:
+      - LOG_LEVEL=info
+      - TZ=Europe/Warsaw
+    ports:
+      - "8191:8191"
+    restart: unless-stopped
+    networks:
+      - media-net
+    healthcheck:
+      test: ["CMD-SHELL","wget -qO- http://localhost:8191/v1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    command: --http-enabled
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - media-net
+    healthcheck:
+      test: ["CMD-SHELL","wget -qO- http://localhost:9000/api/status || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Warsaw
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_SCHEDULE=0 0 4 * * *
+      - WATCHTOWER_INCLUDE_STOPPED=false
+      - WATCHTOWER_REVIVE_STOPPED=false
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - media-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  docker-prune:
+    image: docker:27-cli
+    container_name: docker-prune
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: ["/bin/sh","-c"]
+    command: |
+      while true; do
+        now_date=$(date '+%H%M'); if [ "$now_date" = "0330" ]; then
+          docker system prune -af --volumes;
+          sleep 120;
+        fi;
+        sleep 50;
+      done
+    networks:
+      - media-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  media-net:
+    driver: bridge
+
+volumes:
+  portainer_data:
